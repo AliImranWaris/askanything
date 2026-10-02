@@ -2,28 +2,127 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- MOBILE FIX: Full Screen, No Zoom, Cover Notch -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Ask Anything AI</title>
     <style>
-        :root { --bg: #121212; --chat: #1e1e1e; --primary: #bb86fc; --text: #e0e0e0; --user: #3700b3; --bot: #2c2c2c; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
-        #app { width: 100%; max-width: 600px; display: flex; flex-direction: column; height: 100%; background: var(--bg); position: relative; }
-        header { background: var(--chat); padding: 15px; text-align: center; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        :root { 
+            --bg: #121212; 
+            --chat: #1e1e1e; 
+            --primary: #bb86fc; 
+            --text: #e0e0e0; 
+            --user: #3700b3; 
+            --bot: #2c2c2c; 
+        }
+        
+        /* RESET */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #000; /* Pure Black for edges */
+            color: var(--text); 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            height: 100vh; 
+            width: 100vw; 
+            overflow: hidden; /* No side scroll */
+        }
+
+        #app { 
+            width: 100%; 
+            max-width: 100%; /* Full Width on Mobile */
+            height: 100%; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        header { 
+            background: var(--chat); 
+            padding: 15px; 
+            text-align: center; 
+            border-bottom: 1px solid #333; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-shrink: 0;
+        }
         h1 { margin: 0; font-size: 1.1rem; color: var(--primary); }
         .settings-btn { background: none; border: none; color: var(--text); font-size: 1.2rem; cursor: pointer; }
-        #chat { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; }
-        .user { align-self: flex-end; background: var(--user); color: white; border-bottom-right-radius: 2px; }
-        .bot { align-self: flex-start; background: var(--bot); border: 1px solid #333; border-bottom-left-radius: 2px; }
-        #input-area { background: var(--chat); padding: 10px; display: flex; gap: 10px; border-top: 1px solid #333; }
-        input { flex: 1; padding: 12px; border-radius: 25px; border: none; background: #2c2c2c; color: white; outline: none; }
-        button.send-btn { padding: 10px 20px; border-radius: 25px; border: none; background: var(--primary); color: #000; font-weight: bold; cursor: pointer; }
+
+        #chat { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        .msg { 
+            max-width: 85%; 
+            padding: 12px 16px; 
+            border-radius: 18px; 
+            font-size: 1rem; 
+            line-height: 1.5; 
+            word-wrap: break-word; 
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .user { align-self: flex-end; background: var(--user); color: white; border-bottom-right-radius: 4px; }
+        .bot { align-self: flex-start; background: var(--bot); border: 1px solid #333; border-bottom-left-radius: 4px; }
+
+        #input-area { 
+            background: var(--chat); 
+            padding: 10px; 
+            display: flex; 
+            gap: 10px; 
+            border-top: 1px solid #333; 
+            flex-shrink: 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        }
         
-        /* Modal Styles */
-        #settings-modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        input { 
+            flex: 1; 
+            padding: 12px 15px; 
+            border-radius: 25px; 
+            border: none; 
+            background: #2c2c2c; 
+            color: white; 
+            outline: none; 
+            font-size: 16px; /* Prevents iOS zoom */
+        }
+        
+        button.send-btn { 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            border: none; 
+            background: var(--primary); 
+            color: #000; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
+
+        /* Modal */
+        #settings-modal { 
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; padding: 20px; 
+            box-sizing: border-box; overflow-y: auto; 
+        }
         .modal-content { background: var(--chat); padding: 20px; border-radius: 10px; margin-top: 20px; }
         label { display: block; margin-bottom: 5px; color: var(--primary); font-size: 0.9rem; margin-top: 10px;}
-        input, select { width: 100%; margin-bottom: 10px; padding: 10px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        input[type="password"], input[type="text"], select { 
+            width: 100%; margin-bottom: 10px; padding: 10px; background: #2c2c2c; 
+            border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; 
+        }
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .save-btn { flex: 2; background: var(--primary); color: black; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .fetch-btn { flex: 1; background: #444; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; }
@@ -45,7 +144,6 @@
         <div id="settings-modal">
             <div class="modal-content">
                 <h2 style="margin-top:0;">Settings</h2>
-                
                 <label>OpenRouter API Key</label>
                 <input type="password" id="api-key-input" placeholder="sk-or-v1-...">
                 
@@ -103,7 +201,7 @@
                 btn.innerText = "✅ Done";
                 setTimeout(() => btn.innerText = "🔄 Fetch", 2000);
             } catch (e) {
-                alert("Failed to fetch models. Check internet.");
+                alert("Failed to fetch models.");
                 btn.innerText = "🔄 Fetch";
             }
         }
